@@ -10,17 +10,44 @@
         <link rel="stylesheet" href="css/normalize.min.css">
         <link rel="stylesheet" href="css/main.css">
 
+        <script src="https://code.jquery.com/jquery-2.2.1.min.js"></script>
         <script src="js/vendor/modernizr-2.8.3.min.js"></script>
         <script src="js/vendor/resemble.js"></script>
         <script src="js/vendor/fetch.js"></script>
     </head>
     <body>
         <div class="camera">
-            <video id="video" style="display: none">Video stream not available.</video>
-            <button id="startbutton">START checking</button>
-            <button id="stopbutton">STOP checking</button>
+            <video id="video">Video stream not available.</video>
         </div>
-        <canvas id="canvas"></canvas>
+				<div class="controls">
+					<button id="startbutton">START checking</button>
+					<button id="stopbutton">STOP checking</button>
+
+					<div class="settings">
+						<label>Settings</label>
+						<div>
+							<label for="motionThreshold">Motion threshold [%]</label>
+							<input type="text" id="motionThreshold" />
+						</div>
+
+						<div>
+							<label for="motionThreshold">Time threshold [s]</label>
+							<input type="text" id="timeThreshold" />
+						</div>
+
+						<div>
+							<label for="slackHookUri">Slack hook URI</label>
+							<input type="text" id="slackHookUri"/>
+						</div>
+					</div>
+
+					<div class="logger-control">
+						<label for="showLogger">Show logger</label>
+						<input type="checkbox" id="showLogger" />
+					</div>
+					<textarea id="logger" rows="10" cols="100" style="display: none"></textarea>
+				</div>
+        <canvas id="canvas" style="display: none"></canvas>
 
         <script src="js/photoGrabber.js"></script>
         <script src="js/main.js"></script>
