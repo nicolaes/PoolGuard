@@ -1,9 +1,23 @@
 (function () {
-	var slackHookUri = 'https://hooks.slack.com/services/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';
+	//var storage = chrome.storage.local;
+	var config = {
+		motionThreshold: 5,
+		timeThreshold: 10,
+		slackHookUri: 'https://hooks.slack.com/services/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'
+	};
+	var storage = {
+		'get': function(key) {
+			return config[key]
+		},
+		'set': function(obj) {
+			config = Object.assign({}, config, obj);
+			console.log('set', obj, config);
+		}
+	};
 
-	var motionThreshold = 5,
-		timeThreshold = 10,
+	var timeThreshold = 10,
 
+		noMotionNotificationId = 0,
 		intervalCheck = null,
 		lastMotionDate = Date.now(),
 		noMotionAnnouncedAt = 0;
@@ -12,8 +26,13 @@
 
 	function init() {
 		$('#startbutton').click(function () {
-			intervalCheck = startIntervalCheck();
-			logMessage('Started checking for motion');
+			if (!validateSettings()) {
+				logMessage('Please configure the settings first.');
+			} else if (intervalCheck === null) {
+				intervalCheck = startIntervalCheck();
+				logMessage('Started checking for motion');
+			}
+
 			return false;
 		});
 
@@ -31,34 +50,42 @@
 		});
 
 		$('#motionThreshold')
-			.val(motionThreshold)
+			.val(storage.get('motionThreshold'))
 			.change(function () {
 				var newVal = parseInt($(this).val());
 				if (!newVal) return;
 
-				motionThreshold = newVal;
-				logMessage('Changed motion threshold to ' + motionThreshold);
+				storage.set({motionThreshold: newVal});
+				logMessage('Changed motion threshold to ' + storage.get('motionThreshold'));
 			});
 
 		$('#timeThreshold')
-			.val(timeThreshold)
+			.val(storage.get('timeThreshold'))
 			.change(function () {
 				var newVal = parseInt($(this).val());
 				if (!newVal) return;
 
-				timeThreshold = newVal;
-				logMessage('Changed time threshold to ' + timeThreshold);
+				storage.set({timeThreshold: newVal});
+				logMessage('Changed time threshold to ' + storage.get('timeThreshold'));
 			});
 
 		$('#slackHookUri')
-			.val(slackHookUri)
+			.val(storage.get('slackHookUri'))
 			.change(function () {
 				var newVal = $(this).val();
 				if (!newVal) return;
 
-				slackHookUri = newVal;
-				logMessage('Changed Slack URI to ' + slackHookUri);
+				storage.set({slackHookUri: newVal});
+				logMessage('Changed Slack URI to ' + storage.get('slackHookUri'));
 			});
+	}
+
+	function validateSettings() {
+		return (
+			storage.get('slackHookUri') &&
+			parseInt(storage.get('motionThreshold')) &&
+			parseInt(storage.get('timeThreshold'))
+		);
 	}
 
 	function logMessage(message) {
@@ -79,12 +106,15 @@
 					.ignoreColors()
 					.onComplete(function (data) {
 						var percentage = 'Percentage: ' + data.misMatchPercentage + '%';
-						if (data.misMatchPercentage > motionThreshold) {
+						if (data.misMatchPercentage > storage.get('motionThreshold')) {
 							logMessage('Motion detected. ' + percentage);
-
 							lastMotionDate = Date.now();
+							if (noMotionNotificationId > 0) {
+								noMotionNotificationId = 0;
+								sendSlackMessage('poolTabl3Reoccupied');
+							}
 						} else {
-							logMessage('No motion detected.' + percentage);
+							logMessage('No motion detected. ' + percentage);
 							checkMotionLoop();
 						}
 					});
@@ -94,12 +124,14 @@
 
 	function sendSlackMessage(message) {
 		try {
-			fetch(slackHookUri, {
+			fetch(storage.get('slackHookUri'), {
 				method: 'post',
 				body: JSON.stringify({
 					text: message
 				})
 			});
+
+			logMessage('Sent to Slack: ' + message);
 		} catch (err) {
 			logMessage('No internet connectivity or incorrect Slack hook URI. Check console.');
 			console.error(err);
@@ -111,17 +143,16 @@
 		var noMotionTime = Math.round((now - lastMotionDate) / 1000);
 		var noMotionAnnouncedTime = Math.round((now - noMotionAnnouncedAt) / 1000);
 
+		var timeThreshold = storage.get('timeThreshold');
 		if (noMotionTime >= timeThreshold && noMotionAnnouncedTime >= timeThreshold) {
 			noMotionAnnouncedAt = now;
+			noMotionNotificationId++;
 
 			//var message = 'No motion in ' + noMotionTime + ' seconds!';
 			//var spokenMsg = new SpeechSynthesisUtterance(message);
 			//window.speechSynthesis.speak(spokenMsg);
 
-			var message = 'No motion in ' + noMotionTime + ' seconds';
-
-			sendSlackMessage(message);
-			logMessage('Sent to Slack: ' + message);
+			sendSlackMessage('poolTabl3Empty #' + noMotionNotificationId);
 		}
 	}
 

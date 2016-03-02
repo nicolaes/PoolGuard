@@ -12,6 +12,7 @@
     }
   },
   "permissions": [
-    "videoCapture"
+    "videoCapture",
+		"storage"
   ]
 }
