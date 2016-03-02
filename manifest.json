@@ -3,8 +3,8 @@
   "version": "0.1",
   "manifest_version": 2,
   "icons": {
-    "16": "camera.png",
-    "128": "camera.png"
+    "16": "pool.png",
+    "128": "pool.png"
   },
   "app": {
     "background": {
