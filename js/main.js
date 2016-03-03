@@ -1,8 +1,8 @@
 (function () {
 	//var storage = chrome.storage.local;
 	var config = {
-		motionThreshold: 5,
-		timeThreshold: 10,
+		motionThreshold: 1,
+		timeThreshold: 300,
 		slackHookUri: 'https://hooks.slack.com/services/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'
 	};
 	var storage = {
@@ -15,9 +15,7 @@
 		}
 	};
 
-	var timeThreshold = 10,
-
-		noMotionNotificationId = 0,
+	var noMotionNotificationId = 0,
 		intervalCheck = null,
 		lastMotionDate = Date.now(),
 		noMotionAnnouncedAt = 0;
@@ -101,7 +99,7 @@
 			thisPicture = window.takepicture();
 
 			if (lastPicture !== null && thisPicture !== null) {
-				var diff = resemble(thisPicture)
+				resemble(thisPicture)
 					.compareTo(lastPicture)
 					.ignoreColors()
 					.onComplete(function (data) {
@@ -109,9 +107,18 @@
 						if (data.misMatchPercentage > storage.get('motionThreshold')) {
 							logMessage('Motion detected. ' + percentage);
 							lastMotionDate = Date.now();
+
 							if (noMotionNotificationId > 0) {
 								noMotionNotificationId = 0;
-								sendSlackMessage('poolTabl3Reoccupied');
+								//sendSlackMessage('poolTabl3Reoccupied');
+								sendSlackMessage('The pool table is used again');
+
+								var langs = ['en', 'en', 'en', 'en', 'en', 'es', 'fr', 'de'];
+								var lang = langs[Math.floor(Math.random()*langs.length)];
+
+								var spokenMsg = new SpeechSynthesisUtterance('Welcome to the pool table!');
+								spokenMsg.lang = lang;
+								window.speechSynthesis.speak(spokenMsg);
 							}
 						} else {
 							logMessage('No motion detected. ' + percentage);
@@ -152,7 +159,17 @@
 			//var spokenMsg = new SpeechSynthesisUtterance(message);
 			//window.speechSynthesis.speak(spokenMsg);
 
-			sendSlackMessage('poolTabl3Empty #' + noMotionNotificationId);
+			//sendSlackMessage('poolTabl3Empty #' + noMotionNotificationId);
+			switch (noMotionNotificationId) {
+				case 1:
+					sendSlackMessage('The pool table is unused (' +
+						Math.round(noMotionTime / 60) + ' mins)');
+					break;
+				case 2:
+					sendSlackMessage('Pool table still unused (' +
+						Math.round(noMotionTime / 60) + ' mins)');
+					break;
+			}
 		}
 	}
 
